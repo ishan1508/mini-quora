@@ -44,8 +44,10 @@ application-local.yaml
 /.nb-gradle/
 /build/
 
-# VS Code
-.vscode/
+# Shared VS Code / Cursor configuration
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # macOS
 .DS_Store

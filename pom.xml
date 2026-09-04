@@ -58,6 +58,17 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<showWarnings>true</showWarnings>
+					<compilerArgs>
+						<arg>-Xlint:all</arg>
+						<arg>-Werror</arg>
+					</compilerArgs>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
 				<version>3.6.2</version>
 				<executions>
@@ -89,6 +100,7 @@
 							<version>2.89.0</version>
 						</palantirJavaFormat>
 						<removeUnusedImports/>
+						<forbidWildcardImports/>
 						<formatAnnotations/>
 					</java>
 				</configuration>

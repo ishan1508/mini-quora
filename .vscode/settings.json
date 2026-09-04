@@ -1,0 +1,12 @@
+{
+  "[java]": {
+    "editor.defaultFormatter": "josevseb.google-java-format-for-vs-code",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "always"
+    }
+  },
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.format.settings.google.style": "palantir",
+  "java.format.settings.google.version": "2.89.0"
+}

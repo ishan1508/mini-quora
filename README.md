@@ -52,6 +52,16 @@ To apply the configured Java formatter:
 ./mvnw spotless:apply
 ```
 
+## Editor setup
+
+When Cursor opens the project, install the recommended extensions when prompted. Java
+files are then formatted with Palantir Java Format and imports are organized whenever
+you save.
+
+The editor and Maven use the same pinned formatter version. `./mvnw verify` also runs
+Spotless and strict Java compiler linting, so CI rejects unformatted code, wildcard
+imports, and compiler warnings.
+
 ## Project structure
 
 ```text
