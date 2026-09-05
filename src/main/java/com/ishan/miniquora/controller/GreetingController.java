@@ -1,7 +1,7 @@
-package com.ishan.machinecodingapi.controller;
+package com.ishan.miniquora.controller;
 
-import com.ishan.machinecodingapi.dto.GreetingResponse;
-import com.ishan.machinecodingapi.service.GreetingService;
+import com.ishan.miniquora.dto.GreetingResponse;
+import com.ishan.miniquora.service.GreetingService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;

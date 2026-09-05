@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.ishan</groupId>
-	<artifactId>machine-coding-api</artifactId>
+	<artifactId>mini-quora</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Machine Coding API</name>
-	<description>Reusable Spring Boot starter for machine-coding exercises</description>
+	<name>Mini Quora</name>
+	<description>A compact question-and-answer application</description>
 	<licenses>
 		<license/>
 	</licenses>

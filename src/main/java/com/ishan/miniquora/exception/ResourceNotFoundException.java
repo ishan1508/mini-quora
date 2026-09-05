@@ -1,4 +1,4 @@
-package com.ishan.machinecodingapi.exception;
+package com.ishan.miniquora.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
 

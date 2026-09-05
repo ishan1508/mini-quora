@@ -1,10 +1,10 @@
-package com.ishan.machinecodingapi;
+package com.ishan.miniquora;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class MachineCodingApiApplicationTests {
+class MiniQuoraApplicationTests {
 
     @Test
     void contextLoads() {}
