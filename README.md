@@ -1,8 +1,8 @@
 # Mini Quora
 
-A compact Spring Boot question-and-answer application. It includes a
-thin controller/service/DTO example, request validation, consistent problem responses,
-Actuator health checks, tests, formatting checks, and CI.
+A compact Spring Boot question-and-answer application with request validation,
+consistent problem responses, Actuator health checks, tests, formatting checks,
+and CI.
 
 ## Prerequisites
 
@@ -18,19 +18,6 @@ mvn spring-boot:run
 The application starts on `http://localhost:8080`.
 
 ## API
-
-### Get a greeting
-
-```bash
-curl http://localhost:8080/api/greetings/Ishan
-```
-
-```json
-{"message":"Hello, Ishan!"}
-```
-
-Names are required and limited to 50 characters. Invalid requests return an
-`application/problem+json` response.
 
 ### Questions
 
