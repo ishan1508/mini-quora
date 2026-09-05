@@ -53,12 +53,14 @@ optional.
 
 ```bash
 curl http://localhost:8080/questions/{questionId}
-curl http://localhost:8080/questions
-curl 'http://localhost:8080/questions?query=locking'
+curl 'http://localhost:8080/questions?page=0&size=20'
+curl 'http://localhost:8080/questions?query=locking&page=0&size=20'
 ```
 
-Search is a case-insensitive match across title, body, and tags. Upvote a
-question with:
+Question lists return an `items` array with `page`, `size`, `totalElements`,
+`totalPages`, `first`, and `last` metadata. Pages are zero-based, the default
+size is 20, and the maximum size is 100. Search is a case-insensitive match
+across title, body, and tags. Upvote a question with:
 
 ```bash
 curl -X PUT http://localhost:8080/questions/{questionId}/votes/{userId}

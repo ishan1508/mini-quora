@@ -79,13 +79,64 @@ class QuestionControllerTest {
 
         mockMvc.perform(get("/questions"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0]").exists());
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.items[0]").exists());
 
         mockMvc.perform(get("/questions").queryParam("query", uniqueTerm.toLowerCase()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(questionId));
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.items[0].id").value(questionId));
+    }
+
+    @Test
+    void paginatesQuestionsWithMetadata() throws Exception {
+        String uniqueTerm = "PaginationMarkerBeta";
+        for (int index = 1; index <= 3; index++) {
+            createQuestion("""
+                    {
+                      "title": "%s question %d",
+                      "body": "Question used to verify pagination."
+                    }
+                    """.formatted(uniqueTerm, index));
+        }
+
+        mockMvc.perform(get("/questions")
+                        .queryParam("query", uniqueTerm)
+                        .queryParam("page", "0")
+                        .queryParam("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(false));
+
+        mockMvc.perform(get("/questions")
+                        .queryParam("query", uniqueTerm)
+                        .queryParam("page", "1")
+                        .queryParam("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.first").value(false))
+                .andExpect(jsonPath("$.last").value(true));
+    }
+
+    @Test
+    void rejectsInvalidPaginationParameters() throws Exception {
+        mockMvc.perform(get("/questions").queryParam("page", "-1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Validation failed"));
+
+        mockMvc.perform(get("/questions").queryParam("size", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Validation failed"));
     }
 
     @Test

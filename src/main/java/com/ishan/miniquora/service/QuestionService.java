@@ -1,6 +1,7 @@
 package com.ishan.miniquora.service;
 
 import com.ishan.miniquora.dto.CreateQuestionRequest;
+import com.ishan.miniquora.dto.QuestionPageResponse;
 import com.ishan.miniquora.dto.QuestionResponse;
 import com.ishan.miniquora.exception.ResourceNotFoundException;
 import com.ishan.miniquora.model.Question;
@@ -44,13 +45,28 @@ public class QuestionService {
         return toResponse(findQuestion(questionId));
     }
 
-    public List<QuestionResponse> findAll(String query) {
+    public QuestionPageResponse findAll(String query, int page, int size) {
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
-        return questionRepository.findAll().stream()
+        List<QuestionResponse> matchingQuestions = questionRepository.findAll().stream()
                 .filter(question -> matches(question, normalizedQuery))
                 .sorted(QUESTION_ORDER)
                 .map(QuestionService::toResponse)
                 .toList();
+
+        int totalElements = matchingQuestions.size();
+        int totalPages = totalElements == 0 ? 0 : ((totalElements - 1) / size) + 1;
+        long offset = (long) page * size;
+        int fromIndex = offset >= totalElements ? totalElements : (int) offset;
+        int toIndex = (int) Math.min(offset + size, totalElements);
+
+        return new QuestionPageResponse(
+                matchingQuestions.subList(fromIndex, toIndex),
+                page,
+                size,
+                totalElements,
+                totalPages,
+                page == 0,
+                totalPages == 0 || page >= totalPages - 1);
     }
 
     public QuestionResponse upvote(String questionId, String userId) {
