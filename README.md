@@ -32,6 +32,42 @@ curl http://localhost:8080/api/greetings/Ishan
 Names are required and limited to 50 characters. Invalid requests return an
 `application/problem+json` response.
 
+### Questions
+
+Create a question:
+
+```bash
+curl -i -X POST http://localhost:8080/questions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "title": "How does optimistic locking work?",
+    "body": "I want to prevent lost updates.",
+    "authorId": "user-123",
+    "tags": ["java", "concurrency"]
+  }'
+```
+
+The response is `201 Created` with the question in the body and its URL in the
+`Location` header. Question IDs are generated UUIDs. `authorId` and `tags` are
+optional.
+
+```bash
+curl http://localhost:8080/questions/{questionId}
+curl http://localhost:8080/questions
+curl 'http://localhost:8080/questions?query=locking'
+```
+
+Search is a case-insensitive match across title, body, and tags. Upvote a
+question with:
+
+```bash
+curl -X PUT http://localhost:8080/questions/{questionId}/votes/{userId}
+```
+
+An upvote is idempotent for each user and question: repeating the same request
+does not increase `voteCount`. All question and vote data is held in memory and
+is lost when the application restarts.
+
 ### Check application health
 
 ```bash
@@ -69,6 +105,8 @@ src/main/java/com/ishan/miniquora/
 ├── controller/   HTTP request and response handling
 ├── dto/          API request and response types
 ├── exception/    Consistent Problem Detail error handling
+├── model/        Internal domain types
+├── repository/   In-memory data storage
 └── service/      Business logic
 ```
 
