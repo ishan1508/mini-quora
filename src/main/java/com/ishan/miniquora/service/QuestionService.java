@@ -13,13 +13,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
 public class QuestionService {
-
-    private static final Comparator<Question> QUESTION_ORDER =
-            Comparator.comparing((Question question) -> question.createdAt()).thenComparing(question -> question.id());
 
     private final QuestionRepository questionRepository;
 
@@ -45,11 +43,15 @@ public class QuestionService {
         return toResponse(findQuestion(questionId));
     }
 
-    public QuestionPageResponse findAll(String query, int page, int size) {
+    public QuestionPageResponse findAll(
+            String query, String tags, String sortBy, String direction, int page, int size) {
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        Set<String> normalizedTags = normalizeFilterTags(tags);
+        Comparator<Question> questionOrder = questionOrder(sortBy, direction);
         List<QuestionResponse> matchingQuestions = questionRepository.findAll().stream()
-                .filter(question -> matches(question, normalizedQuery))
-                .sorted(QUESTION_ORDER)
+                .filter(question -> matchesKeyword(question, normalizedQuery))
+                .filter(question -> matchesTags(question, normalizedTags))
+                .sorted(questionOrder)
                 .map(QuestionService::toResponse)
                 .toList();
 
@@ -81,16 +83,44 @@ public class QuestionService {
         return questionRepository.findById(questionId).orElseThrow(() -> notFound(questionId));
     }
 
-    private static boolean matches(Question question, String query) {
+    private static boolean matchesKeyword(Question question, String query) {
         if (query.isEmpty()) {
             return true;
         }
 
         return question.title().toLowerCase(Locale.ROOT).contains(query)
-                || question.body().toLowerCase(Locale.ROOT).contains(query)
-                || question.tags().stream()
-                        .map(tag -> tag.toLowerCase(Locale.ROOT))
-                        .anyMatch(tag -> tag.contains(query));
+                || question.body().toLowerCase(Locale.ROOT).contains(query);
+    }
+
+    private static boolean matchesTags(Question question, Set<String> tags) {
+        return tags.isEmpty() || question.tags().containsAll(tags);
+    }
+
+    private static Set<String> normalizeFilterTags(String tags) {
+        if (tags == null || tags.isBlank()) {
+            return Set.of();
+        }
+
+        return List.of(tags.split(",")).stream()
+                .map(tag -> tag.trim().toLowerCase(Locale.ROOT))
+                .collect(Collectors.toUnmodifiableSet());
+    }
+
+    private static Comparator<Question> questionOrder(String sortBy, String direction) {
+        Comparator<Question> comparator =
+                switch (sortBy) {
+                    case "createdAt" -> Comparator.comparing((Question question) -> question.createdAt());
+                    case "updatedAt" -> Comparator.comparing((Question question) -> question.updatedAt());
+                    case "voteCount" -> Comparator.comparingInt(question -> question.voteCount());
+                    case "title" ->
+                        Comparator.comparing((Question question) -> question.title(), String.CASE_INSENSITIVE_ORDER);
+                    default -> throw new IllegalArgumentException("Unsupported sort field: " + sortBy);
+                };
+
+        if ("desc".equals(direction)) {
+            comparator = comparator.reversed();
+        }
+        return comparator.thenComparing(question -> question.id());
     }
 
     private static String normalizeAuthorId(String authorId) {

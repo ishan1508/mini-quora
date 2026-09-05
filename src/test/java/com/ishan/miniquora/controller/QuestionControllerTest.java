@@ -71,9 +71,9 @@ class QuestionControllerTest {
         String uniqueTerm = "SearchMarkerAlpha";
         String questionId = createQuestion("""
                 {
-                  "title": "A searchable question",
+                  "title": "A searchable %s question",
                   "body": "This body is ordinary.",
-                  "tags": ["%s"]
+                  "tags": ["tag-only-marker"]
                 }
                 """.formatted(uniqueTerm));
 
@@ -89,6 +89,103 @@ class QuestionControllerTest {
                 .andExpect(jsonPath("$.items.length()").value(1))
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.items[0].id").value(questionId));
+
+        mockMvc.perform(get("/questions").queryParam("query", "tag-only-marker"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void filtersByAllRequestedTagsIgnoringCase() throws Exception {
+        String uniqueTerm = "TagFilterMarkerGamma";
+        String matchingQuestionId = createQuestion("""
+                {
+                  "title": "%s complete match",
+                  "body": "Contains both requested tags.",
+                  "tags": ["Java-Filter", "Concurrency-Filter"]
+                }
+                """.formatted(uniqueTerm));
+        createQuestion("""
+                {
+                  "title": "%s partial match",
+                  "body": "Contains only one requested tag.",
+                  "tags": ["java-filter"]
+                }
+                """.formatted(uniqueTerm));
+
+        mockMvc.perform(get("/questions")
+                        .queryParam("query", uniqueTerm)
+                        .queryParam("tags", " JAVA-FILTER , concurrency-filter "))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.items[0].id").value(matchingQuestionId));
+    }
+
+    @Test
+    void sortsBySupportedFieldsAndDirection() throws Exception {
+        String uniqueTerm = "SortMarkerDelta";
+        String bravoQuestionId = createQuestion("""
+                {
+                  "title": "Bravo sorting question",
+                  "body": "%s"
+                }
+                """.formatted(uniqueTerm));
+        String alphaQuestionId = createQuestion("""
+                {
+                  "title": "Alpha sorting question",
+                  "body": "%s"
+                }
+                """.formatted(uniqueTerm));
+        String charlieQuestionId = createQuestion("""
+                {
+                  "title": "Charlie sorting question",
+                  "body": "%s"
+                }
+                """.formatted(uniqueTerm));
+
+        mockMvc.perform(put("/questions/{questionId}/votes/{userId}", alphaQuestionId, "sort-user-1"))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/questions/{questionId}/votes/{userId}", charlieQuestionId, "sort-user-1"))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/questions/{questionId}/votes/{userId}", charlieQuestionId, "sort-user-2"))
+                .andExpect(status().isOk());
+
+        for (String sortBy : new String[] {"createdAt", "updatedAt", "voteCount", "title"}) {
+            for (String direction : new String[] {"asc", "desc"}) {
+                mockMvc.perform(get("/questions")
+                                .queryParam("query", uniqueTerm)
+                                .queryParam("sortBy", sortBy)
+                                .queryParam("direction", direction))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.items.length()").value(3));
+            }
+        }
+
+        mockMvc.perform(get("/questions")
+                        .queryParam("query", uniqueTerm)
+                        .queryParam("sortBy", "title")
+                        .queryParam("direction", "asc"))
+                .andExpect(jsonPath("$.items[0].id").value(alphaQuestionId));
+
+        mockMvc.perform(get("/questions")
+                        .queryParam("query", uniqueTerm)
+                        .queryParam("sortBy", "title")
+                        .queryParam("direction", "desc"))
+                .andExpect(jsonPath("$.items[0].id").value(charlieQuestionId));
+
+        mockMvc.perform(get("/questions")
+                        .queryParam("query", uniqueTerm)
+                        .queryParam("sortBy", "voteCount")
+                        .queryParam("direction", "asc"))
+                .andExpect(jsonPath("$.items[0].id").value(bravoQuestionId));
+
+        mockMvc.perform(get("/questions")
+                        .queryParam("query", uniqueTerm)
+                        .queryParam("sortBy", "voteCount")
+                        .queryParam("direction", "desc"))
+                .andExpect(jsonPath("$.items[0].id").value(charlieQuestionId));
     }
 
     @Test
@@ -135,6 +232,22 @@ class QuestionControllerTest {
                 .andExpect(jsonPath("$.title").value("Validation failed"));
 
         mockMvc.perform(get("/questions").queryParam("size", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Validation failed"));
+    }
+
+    @Test
+    void rejectsInvalidFilterAndSortParameters() throws Exception {
+        mockMvc.perform(get("/questions").queryParam("tags", "java,,concurrency"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Validation failed"));
+
+        mockMvc.perform(get("/questions").queryParam("sortBy", "unsupported"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Validation failed"));
+
+        mockMvc.perform(get("/questions").queryParam("direction", "sideways"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Validation failed"));
     }

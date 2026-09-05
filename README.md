@@ -54,13 +54,20 @@ optional.
 ```bash
 curl http://localhost:8080/questions/{questionId}
 curl 'http://localhost:8080/questions?page=0&size=20'
-curl 'http://localhost:8080/questions?query=locking&page=0&size=20'
+curl 'http://localhost:8080/questions?query=locking&tags=java,concurrency&sortBy=voteCount&direction=desc&page=0&size=20'
 ```
 
 Question lists return an `items` array with `page`, `size`, `totalElements`,
 `totalPages`, `first`, and `last` metadata. Pages are zero-based, the default
-size is 20, and the maximum size is 100. Search is a case-insensitive match
-across title, body, and tags. Upvote a question with:
+size is 20, and the maximum size is 100. `query` performs a case-insensitive
+match against the title or body. The comma-separated `tags` filter requires all
+requested tags to be present and is also case-insensitive.
+
+Results can be sorted by `createdAt`, `updatedAt`, `voteCount`, or `title` with
+an `asc` or `desc` direction. The defaults are `createdAt` and `desc`. Search,
+tag filtering, and sorting are applied before pagination.
+
+Upvote a question with:
 
 ```bash
 curl -X PUT http://localhost:8080/questions/{questionId}/votes/{userId}
